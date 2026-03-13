@@ -5,97 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Skebob Game</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; margin: 0; overflow: hidden; }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; }
         .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid #ffd700; }
         #balance { font-size: 2.5em; color: #ffd700; margin: 0; }
-        .tab-content { display: none; height: 70vh; overflow-y: auto; padding: 20px; }
+        .tab-content { display: none; padding: 20px; height: 70vh; overflow-y: auto; }
         .active { display: block; }
-        
-        /* Главный Скебоб */
-        #skebob-img { width: 250px; margin-top: 50px; cursor: pointer; transition: transform 0.05s; -webkit-user-drag: none; }
-        #skebob-img:active { transform: scale(0.95); }
-
-        /* Магазин */
         .card { background: #252525; padding: 15px; margin: 10px 0; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
-        button { background: #ffd700; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
-        
-        /* Навигация */
+        button { background: #ffd700; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; }
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; }
-        .nav-item { flex: 1; padding: 15px; cursor: pointer; font-size: 0.8em; color: #888; }
-        .nav-item.active-nav { color: #ffd700; font-weight: bold; }
+        .nav-item { flex: 1; padding: 15px; font-size: 0.8em; color: #888; cursor: pointer; }
+        .active-nav { color: #ffd700; font-weight: bold; }
+        #skebob-img { width: 220px; margin-top: 30px; transition: transform 0.05s; }
+        #skebob-img:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1 id="balance">0 🫘</h1>
-    <div id="per-hour">Доход: +0/ч</div>
+    <div id="income-display">Доход: 0 /ч</div>
 </div>
 
-<!-- Вкладки -->
+<!-- ТАПАЛКА -->
 <div id="tab1" class="tab-content active">
-  <img id="skebob-img" src="skebob.jpg" alt="Скебоб">
-    <p>Тапай бобы!</p>
+    <img id="skebob-img" src="skebob.jpg" onclick="tap()">
+    <p>Жми на Скебоба!</p>
 </div>
 
+<!-- УЛУЧШЕНИЯ -->
 <div id="tab2" class="tab-content">
-    <h3>Прокачка Скебоба</h3>
+    <h3>Прокачка Дохода в час</h3>
     <div class="card">
-        <span>+2 к клику<br><small>Цена: 2,000,000</small></span>
-        <button onclick="buyUpgrade(2000000, 2)">Купить</button>
+        <span>Мелкий корм<br><small>+500/ч | Цена: 100,000</small></span>
+        <button onclick="buyIncome(100000, 500)">Купить</button>
     </div>
     <div class="card">
-        <span>+3 к клику<br><small>Цена: 10,000,000</small></span>
-        <button onclick="buyUpgrade(10000000, 3)">Купить</button>
+        <span>Вкусный боб<br><small>+2,000/ч | Цена: 500,000</small></span>
+        <button onclick="buyIncome(500000, 2000)">Купить</button>
     </div>
-    <div class="card">
-        <span>+20 к клику<br><small>Цена: 100,000,000</small></span>
-        <button onclick="buyUpgrade(100000000, 20)">Купить</button>
-    </div>
+    <hr>
+    <h3>Прокачка Клика</h3>
+    <div class="card"><span>+2 к клику (2М)</span><button onclick="buyClick(2000000, 2)">Купить</button></div>
+    <div class="card"><span>+3 к клику (10М)</span><button onclick="buyClick(10000000, 3)">Купить</button></div>
+    <div class="card"><span>+20 к клику (100М)</span><button onclick="buyClick(100000000, 20)">Купить</button></div>
 </div>
 
-<div id="tab3" class="tab-content">
-    <h3>Друзья</h3>
-    <p>Обычный: +500,000 🫘</p>
-    <p>Premium: +1,000,000 🫘</p>
-    <button onclick="alert('Ссылка в боте!')">Пригласить</button>
-</div>
-
+<!-- ПОДДЕРЖКА -->
 <div id="tab4" class="tab-content">
-    <h3>TikTok Автор</h3>
-    <p>Нравится игра? Выложи видео в TikTok и отметь:</p>
-    <h2 style="color: #fe2c55;">Ktotojko</h2>
+    <h3>Поддержка Скебоба</h3>
+    <p>Если нравится игра, выложи видео в ТикТок и отметь автора: <b>Ktotojko</b></p>
+    <div style="background: #333; padding: 15px; border-radius: 15px; margin-top: 20px;">
+        <p>Хочешь поддержать меня? Отправь мне подарок на:</p>
+        <h3 style="color: #ffd700;">@Ktotojko</h3>
+    </div>
 </div>
 
-<div class="nav">
-    <div class="nav-item active-nav" onclick="showTab(1, this)">Тапалка</div>
+<nav class="nav">
+    <div class="nav-item active-nav" onclick="showTab(1, this)">Скебоб</div>
     <div class="nav-item" onclick="showTab(2, this)">Улучшения</div>
-    <div class="nav-item" onclick="showTab(3, this)">Друзья</div>
-    <div class="nav-item" onclick="showTab(4, this)">TikTok</div>
-</div>
+    <div class="nav-item" onclick="showTab(4, this)">Поддержка</div>
+</nav>
 
 <script>
     let beans = parseFloat(localStorage.getItem('beans')) || 0;
     let power = parseInt(localStorage.getItem('power')) || 1;
+    let income = parseInt(localStorage.getItem('income')) || 0;
 
     function updateUI() {
         document.getElementById('balance').innerText = Math.floor(beans).toLocaleString() + " 🫘";
+        document.getElementById('income-display').innerText = "Доход: " + income.toLocaleString() + " /ч";
         localStorage.setItem('beans', beans);
         localStorage.setItem('power', power);
+        localStorage.setItem('income', income);
     }
 
-    document.getElementById('skebob-img').addEventListener('click', (e) => {
-        beans += power;
-        updateUI();
-    });
+    function tap() { beans += power; updateUI(); }
 
-    function buyUpgrade(cost, add) {
-        if (beans >= cost) {
-            beans -= cost;
-            power += add;
+    function buyClick(cost, add) {
+        if (beans >= cost) { beans -= cost; power += add; updateUI(); }
+        else { alert("Мало бобов!"); }
+    }
+
+    function buyIncome(cost, add) {
+        if (beans >= cost) { beans -= cost; income += add; updateUI(); }
+        else { alert("Мало бобов!"); }
+    }
+
+    // Логика дохода в час (каждую секунду)
+    setInterval(() => {
+        if (income > 0) {
+            beans += (income / 3600);
             updateUI();
-        } else { alert("Мало бобов!"); }
-    }
+        }
+    }, 1000);
 
     function showTab(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
