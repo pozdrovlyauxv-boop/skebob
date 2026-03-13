@@ -54,10 +54,10 @@
 </div>
 
 <nav class="nav">
-    <div class="nav-item" onclick="showT('shop', this)">Магазин</div>
-    <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
-    <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
-    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
+    <div class="nav-item" onclick="showTab('shop', this)">Магазин</div>
+    <div class="nav-item" onclick="showTab('upgrades', this)">Апгрейды</div>
+    <div class="nav-item active-nav" onclick="showTab('main', this)">Скебоб</div>
+    <div class="nav-item" onclick="showTab('mark', this)">Рынок</div>
 </nav>
 
 <script>
@@ -81,7 +81,7 @@
         legendary: { n: 'Легенда Скебоб', i: 500000, c: '#ffcc00' }
     };
 
-    function upUI() {
+    function updateUI() {
         document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
         let totalInc = Math.round((ai + (bData[bob]?.i || 0)) * im);
         document.getElementById('inc-dis').innerText = "Доход: " + totalInc.toLocaleString() + " /ч";
@@ -97,7 +97,7 @@
         beans -= costs[t];
         if(t==='c') cm += 0.2; if(t==='a') ai += 100; if(t==='i') im += 0.15; if(t==='e') el += 1; if(t==='p') cp += 5; if(t==='l') lk += 0.5;
         costs[t] = Math.round(costs[t] * 1.7);
-        save(); upUI();
+        save(); updateUI();
     }
 
     function buyEgg(t) {
@@ -108,14 +108,14 @@
         if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res='epic'; }
         else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
         else { if(r < 12+lk) res='legendary'; else if(r < 80) res='epic'; }
-        bob = res; save(); upUI(); alert("Выпал: " + bData[res].n);
+        bob = res; save(); updateUI(); alert("Выпал: " + bData[res].n);
     }
 
     function sellCurrent() {
         if(bob === 'normal') return alert("Обычного нельзя продать!");
         let price = (bData[bob]?.i || 0) * 10;
         myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
-        bob = 'normal'; save(); upUI();
+        bob = 'normal'; save(); updateUI();
     }
 
     function renderLots() {
@@ -129,19 +129,19 @@
         });
     }
 
-    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); save(); upUI(); }
-    function tap() { beans += (cp * cm); upUI(); }
+    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); save(); updateUI(); }
+    function tap() { beans += (cp * cm); updateUI(); }
     function save() { 
         localStorage.setItem('beans', beans); localStorage.setItem('bob', bob); 
         localStorage.setItem('myLots', JSON.stringify(myLots)); localStorage.setItem('costs', JSON.stringify(costs));
     }
-    function showT(id, el) {
+    function showTab(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
-    setInterval(() => { beans += (((ai + (bData[bob]?.i || 0)) * im) / 3600); upUI(); }, 1000);
-    upUI();
+    setInterval(() => { beans += (((ai + (bData[bob]?.i || 0)) * im) / 3600); updateUI(); }, 1000);
+    updateUI();
 </script>
 </body>
 </html>
