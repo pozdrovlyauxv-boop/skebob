@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Skebob Ultra</title>
+    <title>Skebob Game</title>
     <style>
         body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; }
         .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 10; }
@@ -15,10 +15,8 @@
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; }
         .nav-item { flex: 1; padding: 15px; font-size: 0.6em; color: #888; text-transform: uppercase; }
         .active-nav { color: gold; border-top: 2px solid gold; }
-        #skebob-img { width: 200px; margin: 20px; transition: 0.1s; }
+        #skebob-img { width: 200px; margin: 20px; transition: 0.1s; cursor: pointer; }
         #skebob-img:active { transform: scale(0.9); }
-        .rare { color: #007bff; } .epic { color: #a335ee; } .legendary { color: #ffcc00; }
-        #drop-anim { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 30px; border-radius: 20px; border: 2px solid gold; z-index: 100; }
     </style>
 </head>
 <body>
@@ -28,48 +26,33 @@
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
-<!-- МАГАЗИН -->
+<!-- ВКЛАДКИ -->
 <div id="t_shop" class="tab-content">
-    <h3>Яйца</h3>
-    <div class="card"><span class="rare">Редкое (50к)</span><button onclick="buyEgg('rare')">Открыть</button></div>
-    <div class="card"><span class="epic">Эпик (200к)</span><button onclick="buyEgg('epic')">Открыть</button></div>
-    <div class="card"><span class="legendary">Легенда (1М)</span><button onclick="buyEgg('legendary')">Открыть</button></div>
+    <h3>Магазин Яиц</h3>
+    <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
+    <div class="card">Эпик (200к)<button onclick="buyEgg('epic')">Открыть</button></div>
+    <div class="card">Легенда (1М)<button onclick="buyEgg('legendary')">Открыть</button></div>
 </div>
 
-<!-- УЛУЧШЕНИЯ -->
 <div id="t_upg" class="tab-content">
-    <h3>Мастерская (от 1000)</h3>
+    <h3>Улучшения (от 1000)</h3>
     <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1000</button></div>
     <div class="card">Сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2500</button></div>
-    <div class="card">Множитель дохода (x<span id="i-mult-v">1.0</span>)<button id="u_i" onclick="buyU('i')">5000</button></div>
+    <div class="card">Множитель дохода<button id="u_i" onclick="buyU('i')">5000</button></div>
     <div class="card">Склад (Лимит +1)<button id="u_e" onclick="buyU('e')">10000</button></div>
     <div class="card">Энергетик (+5 к тапу)<button id="u_p" onclick="buyU('p')">1500</button></div>
-    <div class="card">Удача (+1% к шансу)<button id="u_l" onclick="buyU('l')">50000</button></div>
+    <div class="card">Удача (+0.5% к шансу)<button id="u_l" onclick="buyU('l')">50000</button></div>
 </div>
 
-<!-- ГЛАВНАЯ -->
 <div id="t_main" class="tab-content active">
     <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
     <h2 id="name">Скебоб</h2>
 </div>
 
-<!-- РЫНОК -->
 <div id="t_mark" class="tab-content">
     <h3>Рынок (48ч выкуп)</h3>
     <div id="my-lots"></div>
     <button onclick="sellCurrent()" style="background: #4CAF50; color: white;">Продать текущего</button>
-</div>
-
-<!-- ЗАДАНИЯ -->
-<div id="t_task" class="tab-content">
-    <h3>Задания</h3>
-    <div class="card">3 реферала (50к)<button onclick="alert('Проверка...')">Забрать</button></div>
-</div>
-
-<div id="drop-anim">
-    <h2 id="d-rar"></h2>
-    <h1 id="d-name"></h1>
-    <button onclick="document.getElementById('drop-anim').style.display='none'">УРА!</button>
 </div>
 
 <nav class="nav">
@@ -77,7 +60,6 @@
     <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
     <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
     <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
-    <div class="nav-item" onclick="showT('task', this)">Задания</div>
 </nav>
 
 <script>
@@ -101,13 +83,12 @@
     };
 
     function upUI() {
-        let totalInc = Math.round((ai + bData[bob].i) * im);
         document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
+        let totalInc = Math.round((ai + bData[bob].i) * im);
         document.getElementById('inc-dis').innerText = "Доход: " + totalInc.toLocaleString() + " /ч";
         document.getElementById('name').innerText = bData[bob].n;
         document.getElementById('name').style.color = bData[bob].c;
         document.getElementById('cm-v').innerText = cm.toFixed(1);
-        document.getElementById('i-mult-v').innerText = im.toFixed(1);
         for(let k in costs) { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).innerText = costs[k].toLocaleString(); }
         renderLots();
     }
@@ -115,46 +96,37 @@
     function buyU(t) {
         if(beans < costs[t]) return alert("Мало бобов!");
         beans -= costs[t];
-        if(t==='c') cm+=0.2; if(t==='a') ai+=100; if(t==='i') im+=0.15; if(t==='e') el+=1; if(t==='p') cp+=5; if(t==='l') lk+=0.5;
+        if(t==='c') cm += 0.2; if(t==='a') ai += 100; if(t==='i') im += 0.15; if(t==='e') el += 1; if(t==='p') cp += 5; if(t==='l') lk += 0.5;
         costs[t] = Math.round(costs[t] * 1.7);
         save(); upUI();
     }
 
     function buyEgg(t) {
-        const prices = { rare: 50000, epic: 200000, legendary: 1000000 };
-        if(beans < prices[t]) return alert("Мало бобов!");
-        beans -= prices[t];
+        const p = { rare: 50000, epic: 200000, legendary: 1000000 };
+        if(beans < p[t]) return alert("Мало бобов!");
+        beans -= p[t];
         let r = Math.random()*100; let res = 'rare';
         if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res='epic'; }
         else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
         else { if(r < 12+lk) res='legendary'; else if(r < 80) res='epic'; }
-        bob = res;
-        document.getElementById('drop-anim').style.display='block';
-        document.getElementById('d-rar').innerText = res.toUpperCase();
-        document.getElementById('d-name').innerText = bData[res].n;
-        save(); upUI();
+        bob = res; save(); upUI(); alert("Выпал: " + bData[res].n);
     }
 
     function sellCurrent() {
         if(bob === 'normal') return alert("Обычного нельзя продать!");
-        let p = prompt("Цена продажи?", bData[bob].i * 10);
-        if(!p || p <= 0) return;
-        myLots.push({ n: bData[bob].n, p: parseInt(p), end: Date.now() + (48*3600*1000), c: bData[bob].c });
-        bob = 'normal';
-        save(); upUI();
+        let price = bData[bob].i * 10;
+        myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
+        bob = 'normal'; save(); upUI();
     }
 
     function renderLots() {
         const cont = document.getElementById('my-lots');
-        cont.innerHTML = myLots.length ? '' : '<p>Нет активных лотов</p>';
+        cont.innerHTML = myLots.length ? '' : '<p>Нет лотов</p>';
         myLots.forEach((l, i) => {
             let left = l.end - Date.now();
-            let isSold = left <= 0 || Math.random() < 0.001; // Имитация покупки другими (шанс 0.1%)
-            let div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `<span style="color:${l.c}">${l.n}</span><br>Цена: ${l.p}<br>
-            ${isSold ? `<button onclick="claim(${i})">Забрать деньги</button>` : `До автовыкупа: ${Math.floor(left/3600000)}ч`} `;
-            cont.appendChild(div);
+            let isReady = left <= 0;
+            cont.innerHTML += `<div class="card"><span style="color:${l.c}">${l.n}</span><br>
+            ${isReady ? `<button onclick="claim(${i})">Забрать ${l.p}</button>` : `Выкуп через ${Math.floor(left/3600000)}ч`}</div>`;
         });
     }
 
