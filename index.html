@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Skebob Ultra</title>
+    <title>Skebob Cloud</title>
     <style>
         body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; }
-        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 10; }
+        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
         .tab-content { display: none; padding: 20px; padding-bottom: 100px; }
         .active { display: block; }
         .card { background: #222; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; }
         button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; }
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; font-size: 0.6em; color: #888; text-transform: uppercase; }
         .active-nav { color: gold; border-top: 2px solid gold; }
         #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; }
         #skebob-img:active { transform: scale(0.9); }
-        .rare { color: #007bff; } .epic { color: #a335ee; } .legendary { color: #ffcc00; }
     </style>
 </head>
 <body>
@@ -26,11 +25,12 @@
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
+<!-- ВКЛАДКИ -->
 <div id="t_shop" class="tab-content">
     <h3>Яйца</h3>
-    <div class="card"><span class="rare">Редкое (50к)</span><button onclick="buyEgg('rare')">Открыть</button></div>
-    <div class="card"><span class="epic">Эпик (200к)</span><button onclick="buyEgg('epic')">Открыть</button></div>
-    <div class="card"><span class="legendary">Легенда (1М)</span><button onclick="buyEgg('legendary')">Открыть</button></div>
+    <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
+    <div class="card">Эпик (200к)<button onclick="buyEgg('epic')">Открыть</button></div>
+    <div class="card">Легенда (1М)<button onclick="buyEgg('legendary')">Открыть</button></div>
 </div>
 
 <div id="t_upg" class="tab-content">
@@ -40,7 +40,7 @@
     <div class="card">Множитель дохода<button id="u_i" onclick="buyU('i')">5000</button></div>
     <div class="card">Склад (Лимит +1)<button id="u_e" onclick="buyU('e')">10000</button></div>
     <div class="card">Энергетик (+5 к тапу)<button id="u_p" onclick="buyU('p')">1500</button></div>
-    <div class="card">Удача (+0.5% к шансу)<button id="u_l" onclick="buyU('l')">50000</button></div>
+    <div class="card">Удача (+0.5%)<button id="u_l" onclick="buyU('l')">50000</button></div>
 </div>
 
 <div id="t_main" class="tab-content active">
@@ -56,7 +56,7 @@
 
 <div id="t_task" class="tab-content">
     <h3>Задания</h3>
-    <div class="card">3 реферала (50к)<button onclick="alert('Проверка рефов...')">Забрать</button></div>
+    <div class="card">3 реферала (50к)<button onclick="alert('Проверка...')">Забрать</button></div>
 </div>
 
 <nav class="nav">
@@ -69,6 +69,7 @@
 
 <script>
     const urlP = new URLSearchParams(window.location.search);
+    // Принимаем данные от бота
     let beans = parseFloat(urlP.get('b')) || 0;
     let cm = parseFloat(urlP.get('cm')) || 1.0;
     let im = parseFloat(urlP.get('im')) || 1.0;
@@ -77,9 +78,9 @@
     let el = parseInt(urlP.get('el')) || 10;
     let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
-    
-    let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
+
     let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500, i: 5000, e: 10000, p: 1500, l: 50000 };
+    let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
 
     const bData = {
         normal: { n: 'Скебоб', i: 0, c: '#fff' },
@@ -97,6 +98,10 @@
         document.getElementById('cm-v').innerText = cm.toFixed(1);
         for(let k in costs) { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).innerText = costs[k].toLocaleString(); }
         renderLots();
+        // Сохраняем в localStorage (как резерв)
+        localStorage.setItem('beans', beans);
+        localStorage.setItem('bob', bob);
+        localStorage.setItem('costs', JSON.stringify(costs));
     }
 
     function buyU(t) {
@@ -104,7 +109,7 @@
         beans -= costs[t];
         if(t==='c') cm += 0.2; if(t==='a') ai += 100; if(t==='i') im += 0.15; if(t==='e') el += 1; if(t==='p') cp += 5; if(t==='l') lk += 0.5;
         costs[t] = Math.round(costs[t] * 1.7);
-        save(); upUI();
+        upUI();
     }
 
     function buyEgg(t) {
@@ -112,17 +117,18 @@
         if(beans < p[t]) return alert("Мало бобов!");
         beans -= p[t];
         let r = Math.random()*100; let res = 'rare';
-        if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res = 'epic'; }
+        if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res='epic'; }
         else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
-        else { if(r < 12+lk) res='legendary'; else if(r < 80) res = 'epic'; }
-        bob = res; save(); upUI(); alert("Выпал: " + bData[res].n);
+        else { if(r < 12+lk) res='legendary'; else if(r < 80) res='epic'; }
+        bob = res; upUI(); alert("Выпал: " + bData[res].n);
     }
 
     function sellCurrent() {
         if(bob === 'normal') return alert("Обычного нельзя продать!");
         let price = bData[bob].i * 10;
         myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
-        bob = 'normal'; save(); upUI();
+        bob = 'normal'; upUI();
+        localStorage.setItem('myLots', JSON.stringify(myLots));
     }
 
     function renderLots() {
@@ -136,17 +142,15 @@
         });
     }
 
-    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); save(); upUI(); }
+    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); localStorage.setItem('myLots', JSON.stringify(myLots)); upUI(); }
     function tap() { beans += (cp * cm); upUI(); }
-    function save() { 
-        localStorage.setItem('beans', beans); localStorage.setItem('bob', bob); 
-        localStorage.setItem('myLots', JSON.stringify(myLots)); localStorage.setItem('costs', JSON.stringify(costs));
-    }
+
     function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
+
     setInterval(() => { beans += (((ai + bData[bob].i) * im) / 3600); upUI(); }, 1000);
     upUI();
 </script>
