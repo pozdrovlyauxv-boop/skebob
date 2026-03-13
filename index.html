@@ -6,13 +6,12 @@
     <title>Skebob Game</title>
     <style>
         body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; }
-        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 10; }
+        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
         .tab-content { display: none; padding: 20px; padding-bottom: 100px; }
         .active { display: block; }
         .card { background: #222; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; }
         button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; }
-        button:disabled { background: #444; color: #888; }
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; font-size: 0.6em; color: #888; text-transform: uppercase; }
         .active-nav { color: gold; border-top: 2px solid gold; }
         #skebob-img { width: 200px; margin: 20px; transition: 0.1s; cursor: pointer; }
@@ -72,6 +71,7 @@
     let el = parseInt(urlP.get('el')) || 10;
     let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
+    
     let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
     let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500, i: 5000, e: 10000, p: 1500, l: 50000 };
 
@@ -84,10 +84,10 @@
 
     function upUI() {
         document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
-        let totalInc = Math.round((ai + bData[bob].i) * im);
+        let totalInc = Math.round((ai + (bData[bob]?.i || 0)) * im);
         document.getElementById('inc-dis').innerText = "Доход: " + totalInc.toLocaleString() + " /ч";
-        document.getElementById('name').innerText = bData[bob].n;
-        document.getElementById('name').style.color = bData[bob].c;
+        document.getElementById('name').innerText = bData[bob]?.n || "Скебоб";
+        document.getElementById('name').style.color = bData[bob]?.c || "#fff";
         document.getElementById('cm-v').innerText = cm.toFixed(1);
         for(let k in costs) { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).innerText = costs[k].toLocaleString(); }
         renderLots();
@@ -102,9 +102,9 @@
     }
 
     function buyEgg(t) {
-        const p = { rare: 50000, epic: 200000, legendary: 1000000 };
-        if(beans < p[t]) return alert("Мало бобов!");
-        beans -= p[t];
+        const prices = { rare: 50000, epic: 200000, legendary: 1000000 };
+        if(beans < prices[t]) return alert("Мало бобов!");
+        beans -= prices[t];
         let r = Math.random()*100; let res = 'rare';
         if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res='epic'; }
         else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
@@ -114,24 +114,24 @@
 
     function sellCurrent() {
         if(bob === 'normal') return alert("Обычного нельзя продать!");
-        let price = bData[bob].i * 10;
+        let price = (bData[bob]?.i || 0) * 10;
         myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
         bob = 'normal'; save(); upUI();
     }
 
     function renderLots() {
         const cont = document.getElementById('my-lots');
-        cont.innerHTML = myLots.length ? '' : '<p>Нет лотов</p>';
+        cont.innerHTML = myLots.length ? '' : '<p>Нет активных лотов</p>';
         myLots.forEach((l, i) => {
             let left = l.end - Date.now();
             let isReady = left <= 0;
             cont.innerHTML += `<div class="card"><span style="color:${l.c}">${l.n}</span><br>
-            ${isReady ? `<button onclick="claim(${i})">Забрать ${l.p}</button>` : `Выкуп через ${Math.floor(left/3600000)}ч`}</div>`;
+            ${isReady ? `<button onclick="claim(${i})">Забрать ${l.p}</button>` : `Выкуп через ${Math.max(0, Math.floor(left/3600000))}ч`}</div>`;
         });
     }
 
     function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); save(); upUI(); }
-    function tap() { beans += (cp * cm); upUI(); }
+    function tap() { beans += (cp * cm); if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); upUI(); }
     function save() { 
         localStorage.setItem('beans', beans); localStorage.setItem('bob', bob); 
         localStorage.setItem('myLots', JSON.stringify(myLots)); localStorage.setItem('costs', JSON.stringify(costs));
@@ -141,7 +141,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
-    setInterval(() => { beans += (((ai + bData[bob].i) * im) / 3600); upUI(); }, 1000);
+    setInterval(() => { beans += (((ai + (bData[bob]?.i || 0)) * im) / 3600); upUI(); }, 1000);
     upUI();
 </script>
 </body>
