@@ -14,7 +14,7 @@
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
         .nav-item { flex: 1; padding: 15px; font-size: 0.6em; color: #888; text-transform: uppercase; }
         .active-nav { color: gold; border-top: 2px solid gold; }
-        #skebob-img { width: 200px; margin: 20px; transition: 0.1s; cursor: pointer; }
+        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; }
         #skebob-img:active { transform: scale(0.9); }
     </style>
 </head>
@@ -25,7 +25,6 @@
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
-<!-- ВКЛАДКИ -->
 <div id="t_shop" class="tab-content">
     <h3>Магазин Яиц</h3>
     <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
@@ -51,7 +50,7 @@
 <div id="t_mark" class="tab-content">
     <h3>Рынок (48ч выкуп)</h3>
     <div id="my-lots"></div>
-    <button onclick="sellCurrent()" style="background: #4CAF50; color: white;">Продать текущего</button>
+    <button onclick="sellCurrent()" style="background: #4CAF50; color: white;">Выставить текущего</button>
 </div>
 
 <nav class="nav">
@@ -131,7 +130,7 @@
     }
 
     function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); save(); upUI(); }
-    function tap() { beans += (cp * cm); if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); upUI(); }
+    function tap() { beans += (cp * cm); upUI(); }
     function save() { 
         localStorage.setItem('beans', beans); localStorage.setItem('bob', bob); 
         localStorage.setItem('myLots', JSON.stringify(myLots)); localStorage.setItem('costs', JSON.stringify(costs));
