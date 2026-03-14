@@ -3,65 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Skebob Cloud</title>
+    <title>Skebob Ultimate</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; overflow-x: hidden; }
-        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
-        .tab-content { display: none; padding: 20px; padding-bottom: 100px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; overflow-x: hidden; }
+        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #bal { font-size: 2em; margin: 0; color: gold; }
+        #inc-dis { font-size: 0.85em; color: #aaa; margin-top: 5px; }
+
+        .tab-content { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.3s; }
         .active { display: block; }
-        .card { background: #222; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; }
-        button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; transition: 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Карточки */
+        .card { background: #222; padding: 15px; margin: 12px 0; border-radius: 16px; border: 1px solid #333; position: relative; }
+        .chance-tag { font-size: 0.7em; display: block; margin: 8px 0; color: #aaa; line-height: 1.4; }
+        .rare-t { color: #3498db; } .epic-t { color: #9b59b6; } .leg-t { color: #f1c40f; }
+
+        /* Цвета редкостей */
+        .name-normal { color: white; }
+        .name-rare { color: #3498db; text-shadow: 0 0 8px #3498db; }
+        .name-epic { color: #9b59b6; text-shadow: 0 0 8px #9b59b6; }
+        .name-leg { color: #f1c40f; text-shadow: 0 0 12px #f1c40f; }
+
+        /* Анимация открытия */
+        #open-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); font-size: 2em; font-weight: bold; }
+        .flash-rare { animation: f-r 0.8s; } @keyframes f-r { 0% { background: #3498db; } 100% { background: transparent; } }
+        .flash-epic { animation: f-e 0.8s; } @keyframes f-e { 0% { background: #9b59b6; } 100% { background: transparent; } }
+        .flash-leg { animation: f-l 0.8s; } @keyframes f-l { 0% { background: #f1c40f; } 100% { background: transparent; } }
+
+        button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; margin-top: 5px; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; overflow-x: auto; }
-        .nav-item { flex: 1; min-width: 75px; padding: 15px 5px; font-size: 0.65em; color: #888; text-transform: uppercase; cursor: pointer; }
-        .active-nav { color: gold; border-top: 2px solid gold; }
-        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; }
-        #skebob-img:active { transform: scale(0.9); }
+        .nav-item { flex: 1; min-width: 70px; padding: 15px 5px; font-size: 0.6em; color: #888; text-transform: uppercase; cursor: pointer; }
+        .active-nav { color: gold; border-top: 3px solid gold; background: rgba(255,215,0,0.05); }
+        
+        #skebob-img { width: 180px; height: 180px; margin: 20px; border-radius: 50%; border: 4px solid #333; cursor: pointer; transition: 0.1s; object-fit: cover; }
+        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; display: none; z-index: 3000; width: 80%; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
+
+<div id="open-overlay">ВЫЛУПЛЕНИЕ...</div>
+<div id="toast" class="toast"></div>
 
 <div class="header">
     <h1 id="bal">0 🫘</h1>
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
+<!-- МАГАЗИН -->
 <div id="t_shop" class="tab-content">
-    <h3>Яйца</h3>
-    <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
-    <div class="card">Эпик (200к)<button onclick="buyEgg('epic')">Открыть</button></div>
+    <h3>Инкубатор</h3>
+    <div class="card">
+        <h4>Редкое Яйцо (50к)</h4>
+        <div class="chance-tag"><span class="rare-t">Редкий: 70%</span> | <span class="epic-t">Эпик: 29%</span> | <span class="leg-t">Легенда: 1%</span></div>
+        <button onclick="openEgg('rare_egg')">Открыть</button>
+    </div>
+    <div class="card">
+        <h4>Эпическое Яйцо (200к)</h4>
+        <div class="chance-tag"><span class="rare-t">Редкий: 42%</span> | <span class="epic-t">Эпик: 53%</span> | <span class="leg-t">Легенда: 5%</span></div>
+        <button onclick="openEgg('epic_egg')">Открыть</button>
+    </div>
+    <div class="card">
+        <h4>Легендарное Яйцо (1М)</h4>
+        <div class="chance-tag"><span class="rare-t">Редкий: 30%</span> | <span class="epic-t">Эпик: 58%</span> | <span class="leg-t">Легенда: 12%</span></div>
+        <button onclick="openEgg('leg_egg')">Открыть</button>
+    </div>
 </div>
 
+<!-- АПГРЕЙДЫ -->
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
-    <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1000</button></div>
-    <div class="card">Сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2500</button></div>
+    <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1,000</button></div>
+    <div class="card">Авто-сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2,500</button></div>
+    <div class="card">Глобальный множитель (x<span id="im-v">1.0</span>)<button id="u_i" onclick="buyU('i')">25,000</button></div>
 </div>
 
+<!-- ГЛАВНАЯ -->
 <div id="t_main" class="tab-content active">
     <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
-    <h2 id="name">Скебоб</h2>
+    <h2 id="name" class="name-normal">Скебоб</h2>
 </div>
 
+<!-- ЗАДАНИЯ -->
+<div id="t_task" class="tab-content">
+    <h3>Задания</h3>
+    <div class="card">Пригласить 1 друга<p>Награда: 5,000 🫘</p><button onclick="checkTask(1, 5000)">Проверить</button></div>
+    <div class="card">Пригласить 5 друзей<p>Награда: 50,000 🫘</p><button onclick="checkTask(5, 50000)">Проверить</button></div>
+</div>
+
+<!-- РЫНОК -->
 <div id="t_mark" class="tab-content">
     <h3>Рынок</h3>
-    <div id="my-lots"></div>
-    <button onclick="sellCurrent()" style="background:#4CAF50;color:white">Выставить текущего</button>
+    <div class="card">
+        <p>Ваш Скебоб: <b id="m-name">Обычный</b></p>
+        <button onclick="sellBob()" style="background:#2ecc71; color:white">Продать (50% цены яйца)</button>
+    </div>
 </div>
 
-<div id="t_task" class="tab-content"><h3>Задания</h3><div class="card">Задание 1<button>Забрать</button></div></div>
-
+<!-- ПОДДЕРЖКА -->
 <div id="t_supp" class="tab-content">
     <h3>Поддержка</h3>
-    <p>Пиши админу в ЛС:</p>
-    <button onclick="window.open('https://t.me')" style="background:#0088cc;color:white">Связаться в ТГ</button>
+    <div class="card">
+        <p>Есть вопросы или баги? Пиши админу!</p>
+        <button onclick="window.open('https://t.me/Ktotojko')" style="background:#0088cc; color:white">Связаться в Telegram</button>
+    </div>
 </div>
 
 <nav class="nav">
     <div class="nav-item" onclick="showT('shop', this)">Магазин</div>
     <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
     <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
-    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
     <div class="nav-item" onclick="showT('task', this)">Задания</div>
+    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
     <div class="nav-item" onclick="showT('supp', this)">Поддержка</div>
 </nav>
 
@@ -74,32 +129,86 @@
     let im = parseFloat(urlP.get('im')) || 1.0;
     let cp = parseInt(urlP.get('cp')) || 1;
     let ai = parseInt(urlP.get('ai')) || 0;
-    let el = parseInt(urlP.get('el')) || 10;
-    let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
+    let refs = parseInt(urlP.get('refs')) || 0;
 
-    let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500 };
-    let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
+    const bData = {
+        normal: { n: 'Обычный Скебоб', i: 100, p: 0, c: 'name-normal' },
+        rare:   { n: 'Редкий Скебоб', i: 5000, p: 50000, c: 'name-rare' },
+        epic:   { n: 'Эпический Скебоб', i: 52000, p: 200000, c: 'name-epic' },
+        leg:    { n: 'Легендарный Скебоб', i: 500000, p: 1000000, c: 'name-leg' }
+    };
 
-    const bData = { normal: { n: 'Скебоб', i: 0, c: '#fff' }, rare: { n: 'Редкий', i: 1000, c: 'cyan' } };
+    const eggSettings = {
+        rare_egg: { cost: 50000, chances: { rare: 70, epic: 29, leg: 1 } },
+        epic_egg: { cost: 200000, chances: { rare: 42, epic: 53, leg: 5 } },
+        leg_egg:  { cost: 1000000, chances: { rare: 30, epic: 58, leg: 12 } }
+    };
+
+    function showMsg(txt, isErr = true) {
+        const t = document.getElementById('toast');
+        t.innerText = txt; t.style.background = isErr ? "#e74c3c" : "#2ecc71";
+        t.style.display = "block"; setTimeout(() => t.style.display="none", 2500);
+    }
 
     function upUI() {
         document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
-        document.getElementById('inc-dis').innerText = "Доход: " + Math.round((ai + bData[bob].i) * im) + " /ч";
-        document.getElementById('name').innerText = bData[bob].n;
+        document.getElementById('inc-dis').innerText = `Доход: ${Math.round((ai + bData[bob].i) * im).toLocaleString()} /ч`;
+        const n = document.getElementById('name');
+        n.innerText = bData[bob].n; n.className = bData[bob].c;
+        document.getElementById('m-name').innerText = bData[bob].n;
+        document.getElementById('m-name').className = bData[bob].c;
         document.getElementById('cm-v').innerText = cm.toFixed(1);
+        document.getElementById('im-v').innerText = im.toFixed(1);
+        document.getElementById('u_c').innerText = Math.round(1000 * cm).toLocaleString();
+        document.getElementById('u_a').innerText = Math.round(2500 * (ai/100 + 1)).toLocaleString();
+    }
+
+    function openEgg(type) {
+        const cfg = eggSettings[type];
+        if(beans < cfg.cost) return showMsg(`Не хватает ${Math.round(cfg.cost - beans).toLocaleString()} бобов!`);
+        beans -= cfg.cost;
+        
+        let rand = Math.random() * 100;
+        let res = rand <= cfg.chances.leg ? 'leg' : (rand <= cfg.chances.leg + cfg.chances.epic ? 'epic' : 'rare');
+
+        const ov = document.getElementById('open-overlay');
+        ov.style.display = 'flex'; ov.className = 'flash-' + res;
+        
+        setTimeout(() => {
+            ov.style.display = 'none';
+            if(bData[res].i > bData[bob].i) {
+                bob = res; showMsg(`ВЫБИТ: ${bData[res].n}!`, false);
+            } else {
+                beans += bData[res].p * 0.2; showMsg(`Выпал ${bData[res].n}, продан за 20% утешительных.`);
+            }
+            upUI(); sendToBackend();
+        }, 1000);
+    }
+
+    function buyU(t) {
+        let cost = t==='c' ? 1000*cm : (t==='a' ? 2500*(ai/100+1) : 25000*im);
+        if(beans < cost) return showMsg("Мало бобов!");
+        beans -= cost;
+        if(t==='c') cm += 0.2; else if(t==='a') ai += 100; else im += 0.2;
+        showMsg("Улучшено!", false); upUI(); sendToBackend();
+    }
+
+    function checkTask(t, r) {
+        if(refs >= t) {
+            if(localStorage.getItem('task_'+t)) return showMsg("Уже получено!");
+            beans += r; localStorage.setItem('task_'+t, '1');
+            showMsg(`+${r.toLocaleString()} бобов!`, false); upUI(); sendToBackend();
+        } else showMsg(`Нужно еще ${t-refs} друзей!`);
+    }
+
+    function sellBob() {
+        if(bob === 'normal') return showMsg("Обычного нельзя продать!");
+        beans += bData[bob].p * 0.5; bob = 'normal';
+        showMsg("Продано!", false); upUI(); sendToBackend();
     }
 
     function tap() { beans += (cp * cm); upUI(); }
-
-    function buyU(t) {
-        if(beans < costs[t]) return alert("Мало!");
-        beans -= costs[t]; if(t==='c') cm+=0.2; if(t==='a') ai+=100;
-        costs[t] = Math.round(costs[t] * 1.7);
-        localStorage.setItem('costs', JSON.stringify(costs));
-        upUI(); sendToBackend();
-    }
-
     function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
@@ -112,13 +221,12 @@
             await fetch(`${SERVER_URL}/save`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ uid, beans, cm, im, cp, ai, el, lk, bob })
+                body: JSON.stringify({ uid, beans, cm, im, cp, ai, el: 10, lk: 0, bob })
             });
         } catch (e) {}
     }
 
     setInterval(() => { beans += ((ai + bData[bob].i) * im) / 3600; upUI(); }, 1000);
-    setInterval(sendToBackend, 10000);
     upUI();
 </script>
 </body>
