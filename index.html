@@ -26,52 +26,26 @@
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
-<!-- ВКЛАДКИ -->
-<div id="t_shop" class="tab-content">
-    <h3>Яйца</h3>
-    <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
-    <div class="card">Эпик (200к)<button onclick="buyEgg('epic')">Открыть</button></div>
-    <div class="card">Легенда (1М)<button onclick="buyEgg('legendary')">Открыть</button></div>
+<div id="t_main" class="tab-content active">
+    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
+    <h2 id="name">Скебоб</h2>
 </div>
 
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
     <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1000</button></div>
     <div class="card">Сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2500</button></div>
-    <div class="card">Множитель дохода<button id="u_i" onclick="buyU('i')">5000</button></div>
-    <div class="card">Склад (Лимит +1)<button id="u_e" onclick="buyU('e')">10000</button></div>
-    <div class="card">Энергетик (+5 к тапу)<button id="u_p" onclick="buyU('p')">1500</button></div>
-    <div class="card">Удача (+0.5%)<button id="u_l" onclick="buyU('l')">50000</button></div>
-</div>
-
-<div id="t_main" class="tab-content active">
-    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
-    <h2 id="name">Скебоб</h2>
-</div>
-
-<div id="t_mark" class="tab-content">
-    <h3>Рынок (48ч выкуп)</h3>
-    <div id="my-lots"></div>
-    <button onclick="sellCurrent()" style="background: #4CAF50; color: white;">Выставить текущего</button>
-</div>
-
-<div id="t_task" class="tab-content">
-    <h3>Задания</h3>
-    <div class="card">3 реферала (50к)<button onclick="alert('Проверка...')">Забрать</button></div>
 </div>
 
 <nav class="nav">
-    <div class="nav-item" onclick="showT('shop', this)">Магазин</div>
-    <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
     <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
-    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
-    <div class="nav-item" onclick="showT('task', this)">Задания</div>
+    <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
 </nav>
 
 <script>
-    // --- ПАРАМЕТРЫ ИЗ URL (ОТ БОТА) ---
     const urlP = new URLSearchParams(window.location.search);
-    const SERVER_URL = "https://chi-patellar-ozell.ngrok-free.dev"; // ЗАМЕНИТЬ ПРИ ДЕПЛОЕ
+    // !!! ВАЖНО: ЗАМЕНИ НА СВОЙ АКТУАЛЬНЫЙ NGROK URL С HTTPS !!!
+    const SERVER_URL = "https://chi-patellar-ozell.ngrok-free.dev"; 
 
     let beans = parseFloat(urlP.get('b')) || 0;
     let cm = parseFloat(urlP.get('cm')) || 1.0;
@@ -82,15 +56,11 @@
     let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
 
-    // Цены (грузим из localstorage или ставим дефолт)
-    let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500, i: 5000, e: 10000, p: 1500, l: 50000 };
-    let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
+    let costs = { c: 1000, a: 2500 }; 
 
     const bData = {
         normal: { n: 'Скебоб', i: 0, c: '#fff' },
-        rare: { n: 'Редкий Скебоб', i: 10000, c: '#007bff' },
-        epic: { n: 'Эпик Скебоб', i: 50000, c: '#a335ee' },
-        legendary: { n: 'Легенда Скебоб', i: 500000, c: '#ffcc00' }
+        rare: { n: 'Редкий Скебоб', i: 10000, c: '#007bff' }
     };
 
     function upUI() {
@@ -98,16 +68,8 @@
         let totalInc = Math.round((ai + bData[bob].i) * im);
         document.getElementById('inc-dis').innerText = "Доход: " + totalInc.toLocaleString() + " /ч";
         document.getElementById('name').innerText = bData[bob].n;
-        document.getElementById('name').style.color = bData[bob].c;
-        document.getElementById('cm-v').innerText = cm.toFixed(1);
-        for(let k in costs) { 
-            let el = document.getElementById('u_'+k);
-            if(el) el.innerText = costs[k].toLocaleString(); 
-        }
-        renderLots();
     }
 
-    // --- ЛОГИКА ИГРЫ ---
     function tap() { beans += (cp * cm); upUI(); }
 
     function buyU(t) {
@@ -115,51 +77,9 @@
         beans -= costs[t];
         if(t==='c') cm += 0.2; 
         if(t==='a') ai += 100; 
-        if(t==='i') im += 0.15; 
-        if(t==='e') el += 1; 
-        if(t==='p') cp += 5; 
-        if(t==='l') lk += 0.5;
-        costs[t] = Math.round(costs[t] * 1.7);
-        localStorage.setItem('costs', JSON.stringify(costs));
         upUI();
-        sendToBackend(); // Сразу сохраняем после покупки
+        sendToBackend(); // Сохраняем после покупки
     }
-
-    function buyEgg(t) {
-        const p = { rare: 50000, epic: 200000, legendary: 1000000 };
-        if(beans < p[t]) return alert("Мало бобов!");
-        beans -= p[t];
-        let r = Math.random()*100; let res = 'rare';
-        if(t==='rare'){ if(r < 1+lk) res='legendary'; else if(r < 30) res='epic'; }
-        else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
-        else { if(r < 12+lk) res='legendary'; else if(r < 80) res='epic'; }
-        bob = res; upUI(); alert("Выпал: " + bData[res].n);
-        sendToBackend();
-    }
-
-    // --- РЫНОК ---
-    function sellCurrent() {
-        if(bob === 'normal') return alert("Обычного нельзя продать!");
-        let price = bData[bob].i * 10;
-        myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
-        bob = 'normal'; 
-        localStorage.setItem('myLots', JSON.stringify(myLots));
-        upUI();
-        sendToBackend();
-    }
-
-    function renderLots() {
-        const cont = document.getElementById('my-lots');
-        cont.innerHTML = myLots.length ? '' : '<p>Нет активных лотов</p>';
-        myLots.forEach((l, i) => {
-            let left = l.end - Date.now();
-            let isReady = left <= 0;
-            cont.innerHTML += `<div class="card"><span style="color:${l.c}">${l.n}</span><br>
-            ${isReady ? `<button onclick="claim(${i})">Забрать ${l.p}</button>` : `Выкуп через ${Math.floor(left/3600000)}ч`}</div>`;
-        });
-    }
-
-    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); localStorage.setItem('myLots', JSON.stringify(myLots)); upUI(); sendToBackend(); }
 
     function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -167,26 +87,30 @@
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
 
-    // --- СИНХРОНИЗАЦИЯ С BACKEND ---
+    // --- СИНХРОНИЗАЦИЯ ---
     async function sendToBackend() {
-        const data = {
-            uid: urlP.get('uid'),
-            beans: beans, cm: cm, im: im, cp: cp, ai: ai, el: el, lk: lk, bob: bob
-        };
+        const uid = urlP.get('uid');
+        if(!uid) return;
+        const data = { uid, beans, cm, im, cp, ai, el, lk, bob };
         try {
-            await fetch(SERVER_URL, {
+            const resp = await fetch(`${SERVER_URL}/save`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-        } catch (e) { console.warn("Сервер сохранения недоступен"); }
+            console.log("Response:", await resp.json());
+        } catch (e) { console.error("Save error:", e); }
     }
 
-    // Циклы
-    setInterval(() => { beans += (((ai + bData[bob].i) * im) / 3600); upUI(); }, 1000);
-    setInterval(sendToBackend, 15000); // Автосейв каждые 15 сек
-    
-    window.addEventListener('beforeunload', sendToBackend);
+    // Авто-майнинг (раз в секунду)
+    setInterval(() => {
+        beans += ((ai + bData[bob].i) * im) / 3600;
+        upUI();
+    }, 1000);
+
+    // Авто-сохранение (раз в 15 секунд)
+    setInterval(sendToBackend, 15000);
+
     upUI();
 </script>
 </body>
