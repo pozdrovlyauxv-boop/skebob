@@ -14,7 +14,7 @@
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; overflow-x: auto; }
         .nav-item { flex: 1; min-width: 75px; padding: 15px 5px; font-size: 0.65em; color: #888; text-transform: uppercase; cursor: pointer; }
         .active-nav { color: gold; border-top: 2px solid gold; }
-        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; }
         #skebob-img:active { transform: scale(0.9); }
     </style>
 </head>
@@ -26,41 +26,34 @@
 </div>
 
 <div id="t_shop" class="tab-content">
-    <h3>Магазин яиц</h3>
+    <h3>Яйца</h3>
     <div class="card">Редкое (50к)<button onclick="buyEgg('rare')">Открыть</button></div>
     <div class="card">Эпик (200к)<button onclick="buyEgg('epic')">Открыть</button></div>
-    <div class="card">Легенда (1М)<button onclick="buyEgg('legendary')">Открыть</button></div>
 </div>
 
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
     <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1000</button></div>
     <div class="card">Сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2500</button></div>
-    <div class="card">Множитель дохода<button id="u_i" onclick="buyU('i')">5000</button></div>
-    <div class="card">Энергетик (+5 к тапу)<button id="u_p" onclick="buyU('p')">1500</button></div>
 </div>
 
 <div id="t_main" class="tab-content active">
-    <img id="skebob-img" src="skebob.jpg" onclick="tap()">
+    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
     <h2 id="name">Скебоб</h2>
 </div>
 
 <div id="t_mark" class="tab-content">
     <h3>Рынок</h3>
     <div id="my-lots"></div>
-    <button onclick="sellCurrent()" style="background: #4CAF50; color: white;">Выставить текущего</button>
+    <button onclick="sellCurrent()" style="background:#4CAF50;color:white">Выставить текущего</button>
 </div>
 
-<div id="t_task" class="tab-content">
-    <h3>Задания</h3>
-    <div class="card">3 реферала (50к)<button onclick="alert('Проверка...')">Забрать</button></div>
-</div>
+<div id="t_task" class="tab-content"><h3>Задания</h3><div class="card">Задание 1<button>Забрать</button></div></div>
 
 <div id="t_supp" class="tab-content">
     <h3>Поддержка</h3>
-    <p>Есть вопросы? Пиши админу!</p>
-    <!-- ТВОЯ КНОПКА С ССЫЛКОЙ НА ТГ -->
-    <button onclick="window.open('https://t.me')" style="background:#0088cc; color:white;">Связаться в Telegram</button>
+    <p>Пиши админу в ЛС:</p>
+    <button onclick="window.open('https://t.me')" style="background:#0088cc;color:white">Связаться в ТГ</button>
 </div>
 
 <nav class="nav">
@@ -74,7 +67,7 @@
 
 <script>
     const urlP = new URLSearchParams(window.location.search);
-    const SERVER_URL = "https://chi-patellar-ozell.ngrok-free.dev"; // <-- ВСТАВЬ СЮДА ССЫЛКУ ИЗ ТЕРМИНАЛА NGROK
+    const SERVER_URL = "https://chi-patellar-ozell.ngrok-free.dev"; 
 
     let beans = parseFloat(urlP.get('b')) || 0;
     let cm = parseFloat(urlP.get('cm')) || 1.0;
@@ -85,68 +78,27 @@
     let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
 
-    let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500, i: 5000, p: 1500 };
+    let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500 };
     let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
 
-    const bData = {
-        normal: { n: 'Скебоб', i: 0, c: '#fff' },
-        rare: { n: 'Редкий Скебоб', i: 10000, c: '#007bff' },
-        epic: { n: 'Эпик Скебоб', i: 50000, c: '#a335ee' },
-        legendary: { n: 'Легенда Скебоб', i: 500000, c: '#ffcc00' }
-    };
+    const bData = { normal: { n: 'Скебоб', i: 0, c: '#fff' }, rare: { n: 'Редкий', i: 1000, c: 'cyan' } };
 
     function upUI() {
         document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
-        let totalInc = Math.round((ai + bData[bob].i) * im);
-        document.getElementById('inc-dis').innerText = "Доход: " + totalInc.toLocaleString() + " /ч";
+        document.getElementById('inc-dis').innerText = "Доход: " + Math.round((ai + bData[bob].i) * im) + " /ч";
         document.getElementById('name').innerText = bData[bob].n;
-        document.getElementById('name').style.color = bData[bob].c;
         document.getElementById('cm-v').innerText = cm.toFixed(1);
-        for(let k in costs) { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).innerText = costs[k].toLocaleString(); }
-        renderLots();
     }
 
     function tap() { beans += (cp * cm); upUI(); }
 
     function buyU(t) {
-        if(beans < costs[t]) return alert("Мало бобов!");
-        beans -= costs[t];
-        if(t==='c') cm += 0.2; 
-        if(t==='a') ai += 100; 
-        if(t==='i') im += 0.15; 
-        if(t==='p') cp += 5; 
+        if(beans < costs[t]) return alert("Мало!");
+        beans -= costs[t]; if(t==='c') cm+=0.2; if(t==='a') ai+=100;
         costs[t] = Math.round(costs[t] * 1.7);
         localStorage.setItem('costs', JSON.stringify(costs));
         upUI(); sendToBackend();
     }
-
-    function buyEgg(t) {
-        const p = { rare: 50000, epic: 200000, legendary: 1000000 };
-        if(beans < p[t]) return alert("Мало бобов!");
-        beans -= p[t];
-        let r = Math.random()*100; let res = 'rare';
-        if(r < 5) res='legendary'; else if(r < 30) res='epic';
-        bob = res; upUI(); sendToBackend();
-    }
-
-    function sellCurrent() {
-        if(bob === 'normal') return alert("Обычного нельзя продать!");
-        myLots.push({ n: bData[bob].n, p: bData[bob].i * 5, end: Date.now() + 60000, c: bData[bob].c });
-        bob = 'normal'; localStorage.setItem('myLots', JSON.stringify(myLots));
-        upUI(); sendToBackend();
-    }
-
-    function renderLots() {
-        const cont = document.getElementById('my-lots');
-        cont.innerHTML = myLots.length ? '' : '<p>Нет активных лотов</p>';
-        myLots.forEach((l, i) => {
-            let left = l.end - Date.now();
-            cont.innerHTML += `<div class="card"><span style="color:${l.c}">${l.n}</span><br>
-            ${left <= 0 ? `<button onclick="claim(${i})">Забрать ${l.p}</button>` : `Ожидание...`}</div>`;
-        });
-    }
-
-    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); localStorage.setItem('myLots', JSON.stringify(myLots)); upUI(); sendToBackend(); }
 
     function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -162,11 +114,11 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ uid, beans, cm, im, cp, ai, el, lk, bob })
             });
-        } catch (e) { console.log("Ошибка сети"); }
+        } catch (e) {}
     }
 
     setInterval(() => { beans += ((ai + bData[bob].i) * im) / 3600; upUI(); }, 1000);
-    setInterval(sendToBackend, 10000); // Сохранение каждые 10 сек
+    setInterval(sendToBackend, 10000);
     upUI();
 </script>
 </body>
