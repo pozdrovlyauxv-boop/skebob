@@ -15,94 +15,82 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .card { background: #222; padding: 15px; margin: 12px 0; border-radius: 16px; border: 1px solid #333; position: relative; }
         
-        /* Цвета редкости */
-        .name-normal { color: white; }
-        .name-rare { color: #3498db; text-shadow: 0 0 8px #3498db; }
-        .name-epic { color: #9b59b6; text-shadow: 0 0 8px #9b59b6; }
-        .name-leg { color: #f1c40f; text-shadow: 0 0 12px #f1c40f; }
-
         button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; margin-top: 5px; transition: 0.2s; }
         button:active { transform: scale(0.95); }
+        button:disabled { background: #555; color: #888; cursor: not-allowed; }
         
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
-        .nav-item { flex: 1; padding: 15px 2px; font-size: 0.65em; color: #888; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .nav-item { flex: 1; padding: 15px 2px; font-size: 0.6em; color: #888; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .active-nav { color: gold; border-top: 3px solid gold; background: rgba(255,215,0,0.05); }
         
         #skebob-img { width: 180px; height: 180px; margin: 20px; border-radius: 50%; border: 4px solid #333; cursor: pointer; transition: 0.1s; object-fit: cover; }
         #skebob-img:active { transform: scale(0.9); }
         
-        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; display: none; z-index: 3000; width: 80%; font-weight: bold; background: rgba(0,0,0,0.9); border: 1px solid gold; }
-   </style>
+        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; display: none; z-index: 3000; width: 80%; font-weight: bold; background: rgba(255, 0, 0, 0.9); color: white; border: 1px solid white; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .toast.success { background: rgba(0, 200, 0, 0.9); }
+    </style>
 </head>
 <body>
 
+<!-- Уведомления -->
 <div id="toast" class="toast"></div>
 
+<!-- Шапка -->
 <div class="header">
     <h1 id="bal">0 🫘</h1>
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
-<!-- ВКЛАДКА МАГАЗИН -->
+<!-- ВКЛАДКИ -->
 <div id="t_shop" class="tab-content">
     <h3>Инкубатор</h3>
-    <div class="card"><h4>Редкое яйцо (50к)</h4><button onclick="openEgg('rare_egg')">Открыть</button></div>
-    <div class="card"><h4>Эпик яйцо (200к)</h4><button onclick="openEgg('epic_egg')">Открыть</button></div>
-    <div class="card"><h4>Легендарное (1М)</h4><button onclick="openEgg('leg_egg')">Открыть</button></div>
+    <div class="card"><h4>Редкое яйцо (50к)</h4><button onclick="showToast('Скоро в игре!')">Открыть</button></div>
+    <div class="card"><h4>Эпик яйцо (200к)</h4><button onclick="showToast('Скоро в игре!')">Открыть</button></div>
 </div>
 
-<!-- ВКЛАДКА АПГРЕЙДЫ -->
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
-    <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button onclick="buyU('c')">Улучшить</button></div>
-    <div class="card">Авто-майнинг (+100/ч)<button onclick="buyU('a')">Улучшить</button></div>
+    <div class="card">
+        <h4>Сила клика (x<span id="cm-v">1.0</span>)</h4>
+        <p style="font-size: 0.8em; color: #aaa;">Увеличивает добычу за один тап</p>
+        <button id="btn-upg-click" onclick="buyU('c')">Улучшить (1,000 🫘)</button>
+    </div>
+    <div class="card">
+        <h4>Авто-майнинг</h4>
+        <button onclick="showToast('В разработке...')">Улучшить</button>
+    </div>
 </div>
 
-<!-- ВКЛАДКА ГЛАВНАЯ -->
 <div id="t_main" class="tab-content active">
     <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com/180?text=SKEBOB'">
-    <h2 id="name" class="name-normal">Скебоб</h2>
+    <h2 id="name">Скебоб</h2>
 </div>
 
-<!-- ВКЛАДКА ЗАДАНИЯ -->
 <div id="t_task" class="tab-content">
     <h3>Задания</h3>
+    <div class="card">Друзья: <span id="ref-count">0</span></div>
     <div class="card">Пригласи 1 друга<button onclick="checkTask(1, 5000)">Проверить</button></div>
-    <div class="card">Пригласи 5 друзей<button onclick="checkTask(5, 50000)">Проверить</button></div>
 </div>
 
-<!-- ВКЛАДКА РЫНОК -->
-<div id="t_mark" class="tab-content">
-    <h3>Рынок</h3>
-    <div class="card"><p id="m-name">Скебоб</p><button onclick="sellBob()">Продать (50% цены)</button></div>
-</div>
-
-<!-- ВКЛАДКА ПОДДЕРЖКА -->
 <div id="t_supp" class="tab-content">
     <h3>Поддержка</h3>
     <div class="card">
-        <p>Нужна помощь или нашел баг?</p>
-        <p style="font-size: 0.8em; color: #aaa;">Нажми на кнопку ниже, чтобы написать администратору напрямую.</p>
+        <p>Нужна помощь?</p>
         <button onclick="openSupport()">Написать админу 🛠️</button>
-    </div>
-    <div class="card">
-        <p>Наше сообщество</p>
-        <button style="background: #333; color: white;" onclick="window.open('https://t.me/твой_канал', '_blank')">Канал новостей 📢</button>
     </div>
 </div>
 
-<!-- НИЖНЕЕ МЕНЮ -->
+<!-- Навигация -->
 <nav class="nav">
     <div class="nav-item" onclick="showT('shop', this)">Магазин</div>
     <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
     <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
     <div class="nav-item" onclick="showT('task', this)">Задания</div>
-    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
     <div class="nav-item" onclick="showT('supp', this)">Поддержка</div>
 </nav>
 
 <script>
-    // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
+    // --- ДАННЫЕ ИГРОКА ---
     const urlParams = new URLSearchParams(window.location.search);
     let user = {
         uid: urlParams.get('uid') || "0",
@@ -111,28 +99,64 @@
         refs: parseInt(urlParams.get('refs')) || 0
     };
 
-    // Обновление UI
+    // --- ОБНОВЛЕНИЕ ЭКРАНА ---
     function updateUI() {
+        // Баланс
         document.getElementById('bal').innerText = Math.floor(user.beans).toLocaleString() + " 🫘";
+        // Сила клика
         document.getElementById('cm-v').innerText = user.cm.toFixed(1);
+        // Рефералы
+        document.getElementById('ref-count').innerText = user.refs;
+
+        // Цена улучшения клика (Сила клика * 1000)
+        let clickPrice = Math.floor(user.cm * 1000);
+        document.getElementById('btn-upg-click').innerText = `Улучшить (${clickPrice.toLocaleString()} 🫘)`;
     }
 
-    // Переключение вкладок
+    // --- ЛОГИКА ТАПА ---
+    function tap() {
+        user.beans += (1 * user.cm);
+        updateUI();
+        // Сохраняем не каждый клик, а реже для скорости, или каждый раз:
+        saveData(); 
+    }
+
+    // --- ПОКУПКА УЛУЧШЕНИЯ ---
+    function buyU(type) {
+        if (type === 'c') {
+            let price = Math.floor(user.cm * 1000);
+
+            if (user.beans >= price) {
+                user.beans -= price;
+                user.cm += 0.5; // Прибавляем 0.5 к силе клика
+                showToast("Улучшено! Теперь сила: x" + user.cm.toFixed(1), true);
+                updateUI();
+                saveData();
+            } else {
+                let missing = price - Math.floor(user.beans);
+                showToast("Недостаточно бобов! Нужно еще: " + missing.toLocaleString());
+            }
+        }
+    }
+
+    // --- ВКЛАДКИ ---
     function showT(tabId, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
         document.getElementById('t_' + tabId).classList.add('active');
-el.classList.add('active-nav');
+        el.classList.add('active-nav');
     }
 
-    // Клик по Скебобу
-    function tap() {
-        user.beans += (1 * user.cm);
-        updateUI();
-        saveData();
+    // --- УВЕДОМЛЕНИЯ ---
+    function showToast(text, isSuccess = false) {
+        const t = document.getElementById('toast');
+        t.innerText = text;
+        t.className = isSuccess ? "toast success" : "toast";
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2500);
     }
 
-    // Функция поддержки
+    // --- ПОДДЕРЖКА ---
     function openSupport() {
         const supportLink = 'https://t.me/Ktotojko'; // ЗАМЕНИ НА СВОЙ НИК
         if (window.Telegram && window.Telegram.WebApp) {
@@ -142,10 +166,9 @@ el.classList.add('active-nav');
         }
     }
 
-    // Сохранение (отправка на Amvera)
+    // --- СОХРАНЕНИЕ НА СЕРВЕР ---
     async function saveData() {
-        // Замени на свою ссылку от Amvera
-        const API_URL = 'https://amvera-dfgbd-run-skebob.amvera.io'; 
+        const API_URL = 'https://amvera-dfgbd-run-skebob.amvera.io'; // ЗАМЕНИ НА СВОЙ URL
         try {
             await fetch(API_URL, {
                 method: 'POST',
@@ -157,28 +180,17 @@ el.classList.add('active-nav');
                     im: 1.0, cp: 1, ai: 0, el: 10, lk: 0, bob: 'normal'
                 })
             });
-        } catch (e) { console.error("Save error", e); }
+        } catch (e) {
+            console.log("Ошибка сохранения");
+        }
     }
 
-    // Заглушки для остальных функций (чтобы не было ошибок)
-    function openEgg(type) { showToast("Яйца скоро появятся!"); }
-    function buyU(type) { showToast("Улучшение куплено!"); }
-    function checkTask(req, reward) { 
-        if(user.refs >= req) { showToast("Выполнено!"); } 
-        else { showToast("Нужно еще пригласить!"); }
-    }
-    function sellBob() { showToast("Скебоб не продается!"); }
-    
-    function showToast(text) {
-        const t = document.getElementById('toast');
-        t.innerText = text;
-        t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 2000);
-    }
-
-    // Стартовое обновление
+    // Запуск
     updateUI();
-    if(window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.ready();
+    if(window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+    }
 </script>
 
 </body>
