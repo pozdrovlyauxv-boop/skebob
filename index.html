@@ -215,16 +215,24 @@
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
 
-    async function sendToBackend() {
-        const uid = urlP.get('uid'); if(!uid) return;
-        try {
-            await fetch(`${SERVER_URL}/save`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ uid, beans, cm, im, cp, ai, el: 10, lk: 0, bob })
-            });
-        } catch (e) {}
+   async function sendToBackend() {
+    const uid = urlP.get('uid'); 
+    if(!uid) return;
+    try {
+        await fetch(`${SERVER_URL}/save`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // ДОБАВЬ ВОТ ЭТУ СТРОЧКУ НИЖЕ:
+                'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({ uid, beans, cm, im, cp, ai, el: 10, lk: 0, bob })
+        });
+        console.log("Данные отправлены!");
+    } catch (e) {
+        console.error("Ошибка сети:", e);
     }
+}
 
     setInterval(() => { beans += ((ai + bData[bob].i) * im) / 3600; upUI(); }, 1000);
     upUI();
