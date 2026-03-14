@@ -3,190 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Skebob Ultimate</title>
+    <title>Skebob 6-in-1</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; overflow-x: hidden; }
-        .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
-        #bal { font-size: 2em; margin: 0; color: gold; }
-        
-        /* Стили вкладок */
-        .tab-content { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0c0c0c; color: white; text-align: center; margin: 0; user-select: none; overflow: hidden; }
+        .header { background: #161616; padding: 10px; border-bottom: 2px solid gold; height: 80px; }
+        #bal { font-size: 1.8em; margin: 0; color: gold; }
+        #income-display { font-size: 0.8em; color: #888; }
+
+        .tab-content { display: none; padding: 15px; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 80px; }
         .active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .card { background: #222; padding: 15px; margin: 12px 0; border-radius: 16px; border: 1px solid #333; }
-        
-        /* Кнопки */
-        button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; margin-top: 5px; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
-        
-        /* Уведомление (Toast) */
-        #toast { 
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
-            padding: 15px 25px; border-radius: 12px; display: none; z-index: 9999; 
-            font-weight: bold; color: white; width: 80%; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .error { background: #ff4444; border: 2px solid #b71c1c; } /* Красный если мало бобов */
-        .success { background: #4caf50; border: 2px solid #1b5e20; } /* Зеленый если купил */
 
-        /* Навигация */
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; }
-        .nav-item { flex: 1; padding: 15px 5px; font-size: 0.65em; color: #888; text-transform: uppercase; cursor: pointer; }
-        .active-nav { color: gold; border-top: 3px solid gold; }
+        .card { background: #1e1e1e; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; }
+        button { background: gold; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; color: black; }
+        button:disabled { background: #444; color: #777; }
 
-        #skebob-img { width: 180px; height: 180px; margin: 20px; border-radius: 50%; border: 4px solid #333; cursor: pointer; }
+        /* Редкости */
+        .rarity-normal { color: white; }
+        .rarity-rare { color: #3498db; text-shadow: 0 0 10px #3498db; } /* Синий */
+        .rarity-epic { color: #9b59b6; text-shadow: 0 0 10px #9b59b6; } /* Фиолетовый */
+        .rarity-leg { color: #f1c40f; text-shadow: 0 0 15px #f1c40f; } /* Желтый */
+
+        #skebob-img { width: 180px; height: 180px; margin: 20px 0; border-radius: 50%; border: 4px solid #333; transition: 0.1s; }
+        #skebob-img:active { transform: scale(0.95); }
+
+        /* Навигация (6 кнопок) */
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #161616; border-top: 1px solid #333; height: 70px; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.55em; color: #666; cursor: pointer; text-transform: uppercase; padding: 5px 0; }
+        .active-nav { color: gold; border-top: 2px solid gold; background: rgba(255,215,0,0.05); }
+
+        /* Оверлей открытия яиц */
+        #egg-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .shake { animation: shake 0.5s infinite; }
+ @keyframes shake { 0% { transform: rotate(0); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0); } }
+
+        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: #ff4444; padding: 10px; border-radius: 8px; display: none; z-index: 3000; }
     </style>
 </head>
 <body>
 
-<!-- Всплывающее уведомление -->
-<div id="toast"></div>
+<div id="toast" class="toast">Недостаточно бобов!</div>
+
+<div id="egg-overlay">
+    <h1 id="egg-status">ОТКРЫВАЕМ...</h1>
+    <img id="egg-img" class="shake" src="https://cdn-icons-png.flaticon.com/512/1799/1799961.png" width="120">
+    <h2 id="egg-result" style="display:none"></h2>
+</div>
 
 <div class="header">
     <h1 id="bal">0 🫘</h1>
-    <p style="margin:0; color:#aaa;">Твой баланс</p>
+    <div id="income-display">Доход: <span id="inc-v">0</span>/ч</div>
 </div>
 
-<!-- ВКЛАДКА ГЛАВНАЯ -->
+<!-- 1. ГЛАВНАЯ (ТАП) -->
 <div id="t_main" class="tab-content active">
-    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com/180?text=TAP'">
-    <h2>Скебоб</h2>
-    <p>Сила клика: <span id="cm-v">1.0</span></p>
+    <h2 id="bob-name" class="rarity-normal">Обычный Боб</h2>
+    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com/180?text=SKEBOB'">
+    <p>Сила клика: x<span id="cm-v">1.0</span></p>
+    <div id="auto-timer" style="color: gold; font-size: 0.9em;"></div>
 </div>
 
-<!-- ВКЛАДКА АПГРЕЙДЫ -->
+<!-- 2. ЯЙЦА -->
+<div id="t_shop" class="tab-content">
+    <h3>Инкубатор</h3>
+    <div class="card">
+        <h4 class="rarity-rare">Редкое яйцо</h4>
+        <p style="font-size:0.7em">Редкий 70% | Эпик 29% | Легенда 1%</p>
+        <button onclick="buyEgg('rare')">Открыть (50,000 🫘)</button>
+    </div>
+    <div class="card">
+        <h4 class="rarity-epic">Эпическое яйцо</h4>
+        <p style="font-size:0.7em">Редкий 35% | Эпик 65% | Легенда 5%</p>
+        <button onclick="buyEgg('epic')">Открыть (200,000 🫘)</button>
+    </div>
+    <div class="card">
+        <h4 class="rarity-leg">Легендарное яйцо</h4>
+        <p style="font-size:0.7em">Редкий 20% | Эпик 53% | Легенда 12%</p>
+        <button onclick="buyEgg('leg')">Открыть (1,000,000 🫘)</button>
+    </div>
+</div>
+
+<!-- 3. АПГРЕЙДЫ -->
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
-    
     <div class="card">
-        <h4>💪 Сила клика</h4>
-        <p>Дает больше бобов за каждый тап</p>
-        <!-- Кнопка с ценой -->
-        <button id="btn-upg-click" onclick="buyU('c')">Улучшить (1000 🫘)</button>
+        <h4>Сила клика</h4>
+        <button id="upg-click" onclick="buyU('click')">1,000 🫘</button>
     </div>
-
     <div class="card">
-        <h4>🤖 Авто-кликер</h4>
-        <button onclick="showToast('Скоро в игре!', 'error')">Купить</button>
+        <h4>Доход в час</h4>
+        <button id="upg-inc" onclick="buyU('inc')">1,000 🫘</button>
+    </div>
+    <div class="card">
+        <h4 style="color: gold;">Автокликер (5 мин)</h4>
+        <button id="upg-auto" onclick="buyU('auto')">3,000,000 🫘</button>
     </div>
 </div>
 
-<!-- ВКЛАДКА ПОДДЕРЖКА -->
+<!-- 4. ЗАДАНИЯ -->
+<div id="t_task" class="tab-content">
+    <h3>Задания</h3>
+    <div class="card">👥 Рефералов: <span id="ref-v">0</span></div>
+    <div class="card">Пригласи 1 друга<button onclick="checkTask(1)">Проверить</button></div>
+    <div class="card">Пригласи 10 друзей<button onclick="checkTask(10)">Проверить</button></div>
+</div>
+
+<!-- 5. РЫНОК -->
+<div id="t_mark" class="tab-content">
+    <h3>Рынок</h3>
+    <div class="card">
+        <p>Продай текущего Боба за 50% стоимости редкости</p>
+        <p id="sell-info" style="color:gold"></p>
+        <button onclick="sellBob()" style="background:#ff4444; color:white;">Продать</button>
+    </div>
+</div>
+
+<!-- 6. ПОДДЕРЖКА -->
 <div id="t_supp" class="tab-content">
     <h3>Поддержка</h3>
     <div class="card">
-        <p>Есть вопросы?</p>
-        <button onclick="openSupport()">Написать админу</button>
+        <p>Нужна помощь или нашел баг?</p>
+        <button onclick="openSupp()">Написать Админу</button>
     </div>
+    <p style="color:#555">Версия игры: 2.0.0</p>
 </div>
 
-<!-- МЕНЮ -->
 <nav class="nav">
-    <div class="nav-item active-nav" onclick="showT('main', this)">Главная</div>
-    <div class="nav-item" onclick="showT('upg', this)">Улучшения</div>
-    <div class="nav-item" onclick="showT('supp', this)">Поддержка</div>
+    <div class="nav-item active-nav" onclick="showT('main', this)">Тап</div>
+    <div class="nav-item" onclick="showT('shop', this)">Яйца</div>
+<div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
+    <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
+    <div class="nav-item" onclick="showT('task', this)">Задания</div>
+    <div class="nav-item" onclick="showT('supp', this)">Помощь</div>
 </nav>
 
 <script>
-    // 1. Получаем данные игрока из ссылки
     const urlParams = new URLSearchParams(window.location.search);
     let user = {
         uid: urlParams.get('uid') || "0",
         beans: parseFloat(urlParams.get('b')) || 0,
-        cm: parseFloat(urlParams.get('cm')) || 1.0
+        cm: parseFloat(urlParams.get('cm')) || 1.0,
+        ai: parseFloat(urlParams.get('ai')) || 0,
+        bob: urlParams.get('bob') || 'normal',
+        cp: parseInt(urlParams.get('cp')) || 1,
+        ip: parseInt(urlParams.get('ip')) || 1,
+        refs: parseInt(urlParams.get('refs')) || 0
     };
 
-    // 2. Обновление текста на экране
+    const bobs = {
+        'normal': { name: 'Обычный Боб', rarity: 0, mult: 1, class: 'rarity-normal', val: 0 },
+        'rare': { name: 'Редкий Боб', rarity: 1, mult: 5, class: 'rarity-rare', val: 50000 },
+        'epic': { name: 'Эпический Боб', rarity: 2, mult: 20, class: 'rarity-epic', val: 200000 },
+        'legendary': { name: 'Легендарный Ске-Боб', rarity: 3, mult: 100, class: 'rarity-leg', val: 1000000 }
+    };
+
+    let autoActive = false;
+
     function updateUI() {
-        // Баланс
         document.getElementById('bal').innerText = Math.floor(user.beans).toLocaleString() + " 🫘";
-        // Сила клика
         document.getElementById('cm-v').innerText = user.cm.toFixed(1);
+        document.getElementById('ref-v').innerText = user.refs;
         
-        // Расчет цены (сила клика * 1000)
-        let price = Math.floor(user.cm * 1000);
-        document.getElementById('btn-upg-click').innerText = `Улучшить (${price.toLocaleString()} 🫘)`;
+        const b = bobs[user.bob];
+        const nameEl = document.getElementById('bob-name');
+        nameEl.innerText = b.name;
+        nameEl.className = b.class;
+
+        document.getElementById('upg-click').innerText = (user.cp * 1000).toLocaleString() + " 🫘";
+        document.getElementById('upg-inc').innerText = (user.ip * 1000).toLocaleString() + " 🫘";
+        
+        const totalInc = user.ai * b.mult;
+        document.getElementById('inc-v').innerText = Math.floor(totalInc).toLocaleString();
+        document.getElementById('sell-info').innerText = "Цена продажи: " + Math.floor(b.val * 0.5).toLocaleString() + " 🫘";
     }
 
-    // 3. Клик (Тап)
     function tap() {
-        user.beans += (1 * user.cm);
+        user.beans += user.cm;
         updateUI();
         saveData();
     }
 
-    // 4. ПОКУПКА УЛУЧШЕНИЯ
     function buyU(type) {
-        if (type === 'c') {
-            let price = Math.floor(user.cm * 1000);
-
-            // ПРОВЕРКА: Хватает ли бобов?
-            if (user.beans >= price) {
-                // Если хватает:
-                user.beans -= price; // Списываем
-                user.cm += 0.5;      // Добавляем силу клика
-                showToast("Успешно улучшено!", "success");
-                updateUI();
-                saveData();
-            } else {
-                // Если НЕ хватает:
-                let need = price - Math.floor(user.beans);
-                showToast("Недостаточно бобов! Нужно еще " + need, "error");
-            }
+        if(type === 'click') {
+            let p = user.cp * 1000;
+            if(user.beans >= p) { user.beans -= p; user.cm += 0.5; user.cp++; } 
+            else showToast();
+        } else if(type === 'inc') {
+            let p = user.ip * 1000;
+            if(user.beans >= p) { user.beans -= p; user.ai += 10; user.ip++; }
+            else showToast();
+        } else if(type === 'auto') {
+            if(user.beans >= 3000000 && !autoActive) {
+                user.beans -= 3000000;
+                startAuto();
+            } else showToast();
         }
+        updateUI();
+        saveData();
     }
 
-    // 5. Переключение вкладок
-    function showT(tabId, el) {
+    function startAuto() {
+        autoActive = true;
+        let time = 300;
+        document.getElementById('upg-auto').disabled = true;
+        const clicker = setInterval(() => { user.beans += user.cm; updateUI(); }, 100);
+        const timer = setInterval(() => {
+            time--;
+            document.getElementById('auto-timer').innerText = `АВТО: ${time}с`;
+            if(time <= 0) {
+                clearInterval(clicker); clearInterval(timer);
+                autoActive = false;
+                document.getElementById('auto-timer').innerText = "";
+                document.getElementById('upg-auto').disabled = false;
+            }
+        }, 1000);
+    }
+
+    async function buyEgg(type) {
+        const p = {rare: 50000, epic: 200000, leg: 1000000};
+        if(user.beans < p[type]) return showToast();
+        user.beans -= p[type];
+        updateUI();
+
+        const ov = document.getElementById('egg-overlay');
+        const res = document.getElementById('egg-result');
+        ov.style.display = 'flex';
+        res.style.display = 'none';
+
+        await new Promise(r => setTimeout(r, 2000));
+
+        let r = Math.random() * 100;
+        let win = 'rare';
+        if(type === 'rare') {
+            if(r < 1) win = 'legendary'; else if(r < 30) win = 'epic'; else win = 'rare';
+        } else if(type === 'epic') {
+            if(r < 5) win = 'legendary'; else if(r < 70) win = 'epic'; else win = 'rare';
+        } else {
+            if(r < 12) win = 'legendary'; else if(r < 65) win = 'epic'; else win = 'rare';
+        }
+
+        res.innerText = "ВЫПАЛ: " + bobs[win].name;
+        res.className = bobs[win].class;
+        res.style.display = 'block';
+
+        if(bobs[win].rarity > bobs[user.bob].rarity) user.bob = win;
+
+        setTimeout(() => { ov.style.display = 'none'; updateUI(); saveData(); }, 2500);
+    }
+
+    function sellBob() {
+        if(user.bob === 'normal') return alert("Нельзя продать обычного Боба!");
+        user.beans += (bobs[user.bob].val * 0.5);
+        user.bob = 'normal';
+        updateUI();
+        saveData();
+    }
+
+    function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        document.getElementById('t_' + tabId).classList.add('active');
+        document.getElementById('t_'+id).classList.add('active');
         el.classList.add('active-nav');
     }
 
-    // 6. Уведомления
-    function showToast(text, type) {
+    function openSupp() {
+        const l = 'https://t.me/Ktotojko';
+        if(window.Telegram?.WebApp) window.Telegram.WebApp.openTelegramLink(l);
+        else window.open(l);
+    }
+
+    function showToast() {
         const t = document.getElementById('toast');
-        t.innerText = text;
-        t.className = type; // error или success
         t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 2000);
+        setTimeout(() => t.style.display = 'none', 2000);
     }
 
-    // 7. Поддержка
-    function openSupport() {
-        const link = 'https://t.me/Ktotojko'; // ЗАМЕНИ НА СВОЙ НИК
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.openTelegramLink(link);
-        } else {
-            window.open(link, '_blank');
-        }
-    }
+    setInterval(() => {
+        user.beans += (user.ai * bobs[user.bob].mult) / 3600;
+        updateUI();
+    }, 1000);
 
-    // 8. Сохранение на сервер Amvera
     async function saveData() {
-        const API = 'https://amvera-dfgbd-run-skebob.amvera.io'; // ЗАМЕНИ НА СВОЙ URL
-        try {
-            fetch(API, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    uid: user.uid,
-                    beans: user.beans,
-                    cm: user.cm,
-                    im: 1.0, cp: 1, ai: 0, el: 10, lk: 0, bob: 'normal'
-                })
-            });
-        } catch(e) {}
+        const API = 'https://amvera-dfgbd-run-skebob.amvera.io'; 
+        try { fetch(API, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(user) }); } catch(e){}
     }
 
-    // Инициализация
     updateUI();
-    if(window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
-    }
+    if(window.Telegram?.WebApp) window.Telegram.WebApp.expand();
 </script>
 
 </body>
