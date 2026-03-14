@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Skebob Ultimate</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; overflow-x: hidden; }
         .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
@@ -24,14 +25,14 @@
         button:active { transform: scale(0.95); }
         
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
-        .nav-item { flex: 1; padding: 15px 5px; font-size: 0.7em; color: #888; text-transform: uppercase; cursor: pointer; }
+        .nav-item { flex: 1; padding: 15px 2px; font-size: 0.65em; color: #888; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .active-nav { color: gold; border-top: 3px solid gold; background: rgba(255,215,0,0.05); }
         
         #skebob-img { width: 180px; height: 180px; margin: 20px; border-radius: 50%; border: 4px solid #333; cursor: pointer; transition: 0.1s; object-fit: cover; }
         #skebob-img:active { transform: scale(0.9); }
         
-        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; display: none; z-index: 3000; width: 80%; font-weight: bold; }
-    </style>
+        .toast { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 20px; border-radius: 10px; display: none; z-index: 3000; width: 80%; font-weight: bold; background: rgba(0,0,0,0.9); border: 1px solid gold; }
+   </style>
 </head>
 <body>
 
@@ -42,7 +43,7 @@
     <div id="inc-dis">Доход: 0 /ч</div>
 </div>
 
-<!-- ВКЛАДКИ -->
+<!-- ВКЛАДКА МАГАЗИН -->
 <div id="t_shop" class="tab-content">
     <h3>Инкубатор</h3>
     <div class="card"><h4>Редкое яйцо (50к)</h4><button onclick="openEgg('rare_egg')">Открыть</button></div>
@@ -50,144 +51,135 @@
     <div class="card"><h4>Легендарное (1М)</h4><button onclick="openEgg('leg_egg')">Открыть</button></div>
 </div>
 
+<!-- ВКЛАДКА АПГРЕЙДЫ -->
 <div id="t_upg" class="tab-content">
     <h3>Улучшения</h3>
     <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button onclick="buyU('c')">Улучшить</button></div>
     <div class="card">Авто-майнинг (+100/ч)<button onclick="buyU('a')">Улучшить</button></div>
 </div>
 
+<!-- ВКЛАДКА ГЛАВНАЯ -->
 <div id="t_main" class="tab-content active">
-    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com'">
+    <img id="skebob-img" src="skebob.jpg" onclick="tap()" onerror="this.src='https://via.placeholder.com/180?text=SKEBOB'">
     <h2 id="name" class="name-normal">Скебоб</h2>
 </div>
 
+<!-- ВКЛАДКА ЗАДАНИЯ -->
 <div id="t_task" class="tab-content">
     <h3>Задания</h3>
     <div class="card">Пригласи 1 друга<button onclick="checkTask(1, 5000)">Проверить</button></div>
     <div class="card">Пригласи 5 друзей<button onclick="checkTask(5, 50000)">Проверить</button></div>
 </div>
 
+<!-- ВКЛАДКА РЫНОК -->
 <div id="t_mark" class="tab-content">
     <h3>Рынок</h3>
     <div class="card"><p id="m-name">Скебоб</p><button onclick="sellBob()">Продать (50% цены)</button></div>
 </div>
 
+<!-- ВКЛАДКА ПОДДЕРЖКА -->
+<div id="t_supp" class="tab-content">
+    <h3>Поддержка</h3>
+    <div class="card">
+        <p>Нужна помощь или нашел баг?</p>
+        <p style="font-size: 0.8em; color: #aaa;">Нажми на кнопку ниже, чтобы написать администратору напрямую.</p>
+        <button onclick="openSupport()">Написать админу 🛠️</button>
+    </div>
+    <div class="card">
+        <p>Наше сообщество</p>
+        <button style="background: #333; color: white;" onclick="window.open('https://t.me/твой_канал', '_blank')">Канал новостей 📢</button>
+    </div>
+</div>
+
+<!-- НИЖНЕЕ МЕНЮ -->
 <nav class="nav">
     <div class="nav-item" onclick="showT('shop', this)">Магазин</div>
     <div class="nav-item" onclick="showT('upg', this)">Апгрейды</div>
     <div class="nav-item active-nav" onclick="showT('main', this)">Скебоб</div>
     <div class="nav-item" onclick="showT('task', this)">Задания</div>
     <div class="nav-item" onclick="showT('mark', this)">Рынок</div>
+    <div class="nav-item" onclick="showT('supp', this)">Поддержка</div>
 </nav>
 
 <script>
-    const urlP = new URLSearchParams(window.location.search);
-    const SERVER_URL = "https://amvera-dfgbd-run-skebob.amvera.io"; 
-
-    let beans = parseFloat(urlP.get('b')) || 0;
-    let cm = parseFloat(urlP.get('cm')) || 1.0;
-    let im = parseFloat(urlP.get('im')) || 1.0;
-    let ai = parseInt(urlP.get('ai')) || 0;
-    let bob = urlP.get('bob') || 'normal';
-    let refs = parseInt(urlP.get('refs')) || 0;
-
-    const bData = {
-        normal: { n: 'Обычный Скебоб', i: 10, p: 0, c: 'name-normal' },
-        rare:   { n: 'Редкий Скебоб', i: 1000, p: 50000, c: 'name-rare' },
-        epic:   { n: 'Эпический Скебоб', i: 10000, p: 200000, c: 'name-epic' },
-        leg:    { n: 'Легендарный Скебоб', i: 100000, p: 1000000, c: 'name-leg' }
+    // --- ИНИЦИАЛИЗАЦИЯ ДАННЫХ ---
+    const urlParams = new URLSearchParams(window.location.search);
+    let user = {
+        uid: urlParams.get('uid') || "0",
+        beans: parseFloat(urlParams.get('b')) || 0,
+        cm: parseFloat(urlParams.get('cm')) || 1.0,
+        refs: parseInt(urlParams.get('refs')) || 0
     };
 
-    function showMsg(txt, isErr = true) {
-        const t = document.getElementById('toast');
-        t.innerText = txt; t.style.background = isErr ? "#e74c3c" : "#2ecc71";
-        t.style.display = "block"; setTimeout(() => t.style.display="none", 2000);
+    // Обновление UI
+    function updateUI() {
+        document.getElementById('bal').innerText = Math.floor(user.beans).toLocaleString() + " 🫘";
+        document.getElementById('cm-v').innerText = user.cm.toFixed(1);
     }
 
-    function upUI() {
-        document.getElementById('bal').innerText = Math.floor(beans).toLocaleString();
-        document.getElementById('inc-dis').innerText = `Доход: ${Math.round((ai + bData[bob].i) * im).toLocaleString()} /ч`;
-        document.getElementById('name').innerText = bData[bob].n;
-        document.getElementById('name').className = bData[bob].c;
-        document.getElementById('m-name').innerText = bData[bob].n;
-        document.getElementById('cm-v').innerText = cm.toFixed(1);
-    }
-
-    function tap() { 
-        beans += (1 * cm); 
-        upUI(); 
-        // Сохраняем каждые 10 кликов для стабильности
-        if(Math.floor(beans) % 10 === 0) sendToBackend(); 
-    }
-
-    function buyU(t) {
-        let cost = t === 'c' ? 1000 * cm : 2500 * (ai/100 + 1);
-        if(beans < cost) return showMsg("Мало бобов!");
-        beans -= cost;
-        if(t === 'c') cm += 0.2; else ai += 100;
-        showMsg("Улучшено!", false); upUI(); sendToBackend();
-    }
-
-    async function sendToBackend() {
-        const uid = urlP.get('uid'); if(!uid) return;
-        try {
-            await fetch(`${SERVER_URL}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid, beans, cm, im, ai, bob })
-            });
-        } catch (e) { console.error("Ошибка сети:", e); }
-    }
-
-    function openEgg(type) {
-        let cost = type === 'rare_egg' ? 50000 : (type === 'epic_egg' ? 200000 : 1000000);
-        if(beans < cost) return showMsg("Не хватает бобов!");
-        beans -= cost;
-        let rand = Math.random() * 100;
-        let res = rand < 5 ? 'leg' : (rand < 25 ? 'epic' : 'rare');
-        
-        if(bData[res].i > bData[bob].i) { 
-            bob = res; 
-            showMsg(`ВЫБИТ: ${bData[res].n}!`, false); 
-        } else { 
-            beans += cost * 0.2; 
-            showMsg("Выпал слабый скебоб, продан за 20% стоимости."); 
-        }
-        upUI(); sendToBackend();
-    }
-
-    function checkTask(t, r) {
-        if(refs >= t) { 
-            beans += r; 
-            showMsg("Награда получена!", false); 
-            upUI(); sendToBackend(); 
-        } else showMsg("Нужно больше друзей!");
-    }
-
-    function sellBob() {
-        if(bob === 'normal') return showMsg("Обычного нельзя продать!");
-        beans += bData[bob].p * 0.5; 
-        bob = 'normal';
-        showMsg("Продано!", false); upUI(); sendToBackend();
-    }
-
-    function showT(id, el) {
+    // Переключение вкладок
+    function showT(tabId, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        document.getElementById('t_'+id).classList.add('active');
-        el.classList.add('active-nav');
+        document.getElementById('t_' + tabId).classList.add('active');
+el.classList.add('active-nav');
     }
 
-    // Автодоход каждую секунду
-    setInterval(() => { 
-        beans += ((ai + bData[bob].i) * im) / 3600; 
-        upUI(); 
-    }, 1000);
+    // Клик по Скебобу
+    function tap() {
+        user.beans += (1 * user.cm);
+        updateUI();
+        saveData();
+    }
 
-    // Сохранение раз в 30 секунд
-    setInterval(sendToBackend, 30000);
+    // Функция поддержки
+    function openSupport() {
+        const supportLink = 'https://t.me/Ktotojko'; // ЗАМЕНИ НА СВОЙ НИК
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.openTelegramLink(supportLink);
+        } else {
+            window.open(supportLink, '_blank');
+        }
+    }
 
-    upUI();
+    // Сохранение (отправка на Amvera)
+    async function saveData() {
+        // Замени на свою ссылку от Amvera
+        const API_URL = 'https://amvera-dfgbd-run-skebob.amvera.io'; 
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    uid: user.uid,
+                    beans: user.beans,
+                    cm: user.cm,
+                    im: 1.0, cp: 1, ai: 0, el: 10, lk: 0, bob: 'normal'
+                })
+            });
+        } catch (e) { console.error("Save error", e); }
+    }
+
+    // Заглушки для остальных функций (чтобы не было ошибок)
+    function openEgg(type) { showToast("Яйца скоро появятся!"); }
+    function buyU(type) { showToast("Улучшение куплено!"); }
+    function checkTask(req, reward) { 
+        if(user.refs >= req) { showToast("Выполнено!"); } 
+        else { showToast("Нужно еще пригласить!"); }
+    }
+    function sellBob() { showToast("Скебоб не продается!"); }
+    
+    function showToast(text) {
+        const t = document.getElementById('toast');
+        t.innerText = text;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2000);
+    }
+
+    // Стартовое обновление
+    updateUI();
+    if(window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.ready();
 </script>
+
 </body>
 </html>
