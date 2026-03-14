@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Skebob Cloud</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; user-select: none; overflow-x: hidden; }
         .header { background: #1e1e1e; padding: 15px; border-bottom: 2px solid gold; position: sticky; top: 0; z-index: 100; }
         .tab-content { display: none; padding: 20px; padding-bottom: 100px; }
         .active { display: block; }
         .card { background: #222; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; }
-        button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; }
+        button { background: gold; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; color: black; transition: 0.2s; }
+        button:active { transform: scale(0.95); opacity: 0.8; }
         .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1e1e1e; border-top: 1px solid #333; z-index: 100; }
-        .nav-item { flex: 1; padding: 15px; font-size: 0.6em; color: #888; text-transform: uppercase; }
+        .nav-item { flex: 1; padding: 15px; font-size: 0.7em; color: #888; text-transform: uppercase; cursor: pointer; }
         .active-nav { color: gold; border-top: 2px solid gold; }
-        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; }
+        #skebob-img { width: 180px; margin: 20px; transition: 0.1s; cursor: pointer; -webkit-tap-highlight-color: transparent; }
         #skebob-img:active { transform: scale(0.9); }
     </style>
 </head>
@@ -34,7 +35,7 @@
 </div>
 
 <div id="t_upg" class="tab-content">
-    <h3>Улучшения (от 1000)</h3>
+    <h3>Улучшения</h3>
     <div class="card">Сила клика (x<span id="cm-v">1.0</span>)<button id="u_c" onclick="buyU('c')">1000</button></div>
     <div class="card">Сборщик (+100/ч)<button id="u_a" onclick="buyU('a')">2500</button></div>
     <div class="card">Множитель дохода<button id="u_i" onclick="buyU('i')">5000</button></div>
@@ -68,8 +69,10 @@
 </nav>
 
 <script>
+    // --- ПАРАМЕТРЫ ИЗ URL (ОТ БОТА) ---
     const urlP = new URLSearchParams(window.location.search);
-    // Принимаем данные от бота
+    const SERVER_URL = "https://chi-patellar-ozell.ngrok-free.dev"; // ЗАМЕНИТЬ ПРИ ДЕПЛОЕ
+
     let beans = parseFloat(urlP.get('b')) || 0;
     let cm = parseFloat(urlP.get('cm')) || 1.0;
     let im = parseFloat(urlP.get('im')) || 1.0;
@@ -79,6 +82,7 @@
     let lk = parseFloat(urlP.get('lk')) || 0;
     let bob = urlP.get('bob') || 'normal';
 
+    // Цены (грузим из localstorage или ставим дефолт)
     let costs = JSON.parse(localStorage.getItem('costs')) || { c: 1000, a: 2500, i: 5000, e: 10000, p: 1500, l: 50000 };
     let myLots = JSON.parse(localStorage.getItem('myLots')) || [];
 
@@ -96,20 +100,29 @@
         document.getElementById('name').innerText = bData[bob].n;
         document.getElementById('name').style.color = bData[bob].c;
         document.getElementById('cm-v').innerText = cm.toFixed(1);
-        for(let k in costs) { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).innerText = costs[k].toLocaleString(); }
+        for(let k in costs) { 
+            let el = document.getElementById('u_'+k);
+            if(el) el.innerText = costs[k].toLocaleString(); 
+        }
         renderLots();
-        // Сохраняем в localStorage (как резерв)
-        localStorage.setItem('beans', beans);
-        localStorage.setItem('bob', bob);
-        localStorage.setItem('costs', JSON.stringify(costs));
     }
+
+    // --- ЛОГИКА ИГРЫ ---
+    function tap() { beans += (cp * cm); upUI(); }
 
     function buyU(t) {
         if(beans < costs[t]) return alert("Мало бобов!");
         beans -= costs[t];
-        if(t==='c') cm += 0.2; if(t==='a') ai += 100; if(t==='i') im += 0.15; if(t==='e') el += 1; if(t==='p') cp += 5; if(t==='l') lk += 0.5;
+        if(t==='c') cm += 0.2; 
+        if(t==='a') ai += 100; 
+        if(t==='i') im += 0.15; 
+        if(t==='e') el += 1; 
+        if(t==='p') cp += 5; 
+        if(t==='l') lk += 0.5;
         costs[t] = Math.round(costs[t] * 1.7);
+        localStorage.setItem('costs', JSON.stringify(costs));
         upUI();
+        sendToBackend(); // Сразу сохраняем после покупки
     }
 
     function buyEgg(t) {
@@ -121,14 +134,18 @@
         else if(t==='epic'){ if(r < 5+lk) res='legendary'; else if(r < 80) res='epic'; }
         else { if(r < 12+lk) res='legendary'; else if(r < 80) res='epic'; }
         bob = res; upUI(); alert("Выпал: " + bData[res].n);
+        sendToBackend();
     }
 
+    // --- РЫНОК ---
     function sellCurrent() {
         if(bob === 'normal') return alert("Обычного нельзя продать!");
         let price = bData[bob].i * 10;
         myLots.push({ n: bData[bob].n, p: price, end: Date.now() + (48*3600*1000), c: bData[bob].c });
-        bob = 'normal'; upUI();
+        bob = 'normal'; 
         localStorage.setItem('myLots', JSON.stringify(myLots));
+        upUI();
+        sendToBackend();
     }
 
     function renderLots() {
@@ -142,8 +159,7 @@
         });
     }
 
-    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); localStorage.setItem('myLots', JSON.stringify(myLots)); upUI(); }
-    function tap() { beans += (cp * cm); upUI(); }
+    function claim(i) { beans += myLots[i].p; myLots.splice(i, 1); localStorage.setItem('myLots', JSON.stringify(myLots)); upUI(); sendToBackend(); }
 
     function showT(id, el) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -151,7 +167,26 @@
         document.getElementById('t_'+id).classList.add('active'); el.classList.add('active-nav');
     }
 
+    // --- СИНХРОНИЗАЦИЯ С BACKEND ---
+    async function sendToBackend() {
+        const data = {
+            uid: urlP.get('uid'),
+            beans: beans, cm: cm, im: im, cp: cp, ai: ai, el: el, lk: lk, bob: bob
+        };
+        try {
+            await fetch(SERVER_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+        } catch (e) { console.warn("Сервер сохранения недоступен"); }
+    }
+
+    // Циклы
     setInterval(() => { beans += (((ai + bData[bob].i) * im) / 3600); upUI(); }, 1000);
+    setInterval(sendToBackend, 15000); // Автосейв каждые 15 сек
+    
+    window.addEventListener('beforeunload', sendToBackend);
     upUI();
 </script>
 </body>
